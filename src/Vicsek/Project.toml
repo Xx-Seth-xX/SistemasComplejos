@@ -2,3 +2,6 @@ name = "Vicsek"
 uuid = "e586df3f-75db-45ec-bd3b-e0485f1a1eb1"
 authors = ["Seth <53190848+Xx-Seth-xX@users.noreply.github.com>"]
 version = "0.1.0"
+
+[deps]
+SCUtils = "49baff95-e071-4f3e-92f1-47152cc99b7a"
