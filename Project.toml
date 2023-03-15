@@ -4,6 +4,7 @@ authors = ["Daniel Luque", "Christian Muñoz"]
 [deps]
 DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
 SCUtils = "49baff95-e071-4f3e-92f1-47152cc99b7a"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Vicsek = "e586df3f-75db-45ec-bd3b-e0485f1a1eb1"
 
 [compat]
