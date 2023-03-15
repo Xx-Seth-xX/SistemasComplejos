@@ -8,15 +8,16 @@ using Reexport
 struct CellList
     cells::Dict{SVector{2, Int}, Vector{Int}}
 end
-function CellList(p::Vector{SVector{2,Float64}}, r::Float64, L::Float64)
+function CellList(p::Vector{T}, r::Real) where T
+    return CellList(identity, p, r)
+end
+function CellList(foo::Function, p::Vector{T}, r::Real) where T
     #We make sure r is > 0
     @assert r > 0
-    #We get the number of particles
-    n = length(p)
     data = Dict{SVector{2, Int}, Vector{Int}}()
     for i in eachindex(p)
         #We calculate the associated cell for that particle
-        cell = Int.(div.(p[i],r,RoundUp))
+        cell = Int.(div.(foo(p[i]),r,RoundUp))
         #If the cell is already registered in the data we add the index of that particle to it's vector, otherwise we push the cell to data with said index
         if haskey(data, cell)
             push!(data[cell], i)
@@ -28,17 +29,23 @@ function CellList(p::Vector{SVector{2,Float64}}, r::Float64, L::Float64)
     return CellList(data)
 end
 
-function find_nn(positions::Vector{SVector{2, Float64}}, r::Real, L::Real) 
-    find_nn(positions, CellList(positions, r, L), float(r), float(L))
+
+find_nn(positions::Vector{T}, r::Real, L::Real) where T = 
+    find_nn(identity, positions, r, L)
+function find_nn(foo::Function, positions::Vector{T}, r::Real, L::Real) where T 
+    find_nn!(Vector{Vector{Int}}(undef, length(positions)), foo, positions, r, L)
 end
-function find_nn(positions::Vector{SVector{2, Float64}}, data::CellList, r::Float64,L::Float64)
+find_nn!(nn_list::Vector{Vector{Int}}, positions::Vector{T}, r::Real, L::Real) where T  = 
+    find_nn!(identity, nn_list, positions, CellList(positions, r), float(r), float(L))
+function find_nn!(nn_list::Vector{Vector{Int}}, foo::Function, positions::Vector{T}, r::Real, L::Real) where T  
+    find_nn!(nn_list, foo,positions, CellList(foo, positions, r), float(r), float(L))
+end
+function find_nn!(nn_list::Vector{Vector{Int}}, foo::Function,positions::Vector{T}, data::CellList, r::Float64,L::Float64) where T 
     #We first generate the offsets to all adjacent cells
     cells = data.cells
     offsets = [SVector(i,j) for i = -1:1, j=-1:1]
 
     max_cell_index = Int(div(L, r, RoundUp))
-
-    nn_list = [Int[] for _ in positions]
 
     r2 = r^2
     for (cell, particles) in cells
@@ -70,7 +77,7 @@ function find_nn(positions::Vector{SVector{2, Float64}}, data::CellList, r::Floa
                         if alter_p == p
                             continue
                         end
-                        if norm2((positions[alter_p] + pos_offset) - positions[p]) < r2
+                        if norm2((foo(positions[alter_p]) + pos_offset) - foo(positions[p])) < r2
                             push!(particles_nn_to_p, alter_p)
                         end
                     end
@@ -127,11 +134,24 @@ end
     push!(particles, SVector(1.5,1.6)) #(2,2)
     push!(particles, SVector(2.5,2.7)) #(3,3)
     r = 1.0
-    @test CellList(particles,r, 3.0).cells == Dict([SVector(1,1) => [1,2], 
+    @test CellList(particles,r).cells == Dict([SVector(1,1) => [1,2], 
                                                 SVector(2,1) => [3],
                                                 SVector(2,2) => [4,5],
                                                 SVector(3,3) => [6]])
 
+end
+
+function average(values::Vector{T}) where T <: Real
+    N = length(values)
+    return sum(values, init = zero(T))
+end
+function average(f::Function, values::Vector{T}) where T <: Real
+    N = length(values)
+    return sum(values, init = zero(T))
+end
+function average(f::Function, values::Vector{T}) where T 
+    N = length(values)
+    return sum((x) -> f(x), values, init = f()) 
 end
 
 end # module SCUtils
