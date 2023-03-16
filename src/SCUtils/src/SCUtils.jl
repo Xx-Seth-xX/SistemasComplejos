@@ -3,7 +3,7 @@ using Reexport
 @reexport using Test
 @reexport using StaticArrays
 @reexport using SparseArrays
-
+@reexport using ProgressMeter
 #Utilities for finding near neighbours
 struct CellList
     cells::Dict{SVector{2, Int}, Vector{Int}}
@@ -75,6 +75,7 @@ function find_nn!(nn_list::Vector{Vector{Int}}, foo::Function,positions::Vector{
                 if haskey(cells, ncell)
                     for alter_p in cells[ncell]
                         if alter_p == p
+                            push!(particles_nn_to_p, alter_p)
                             continue
                         end
                         if norm2((foo(positions[alter_p]) + pos_offset) - foo(positions[p])) < r2
@@ -106,7 +107,8 @@ function find_nn_brute_force(particles::Vector{SVector{2, Float64}}, r, L)
     for i in eachindex(particles)
         particles_nn_to_i = Int[]
         for alter_i in eachindex(particles)
-            if alter_i == i
+            if alter_i == 
+                push!(particles_nn_to_i, alter_i)
                 continue
             elseif norm2(particles[i] - particles[alter_i]) < r2              
                 push!(particles_nn_to_i, alter_i)
@@ -143,15 +145,15 @@ end
 
 function average(values::Vector{T}) where T <: Real
     N = length(values)
-    return sum(values, init = zero(T))
+    return sum(values, init = zero(T)) / N
 end
 function average(f::Function, values::Vector{T}) where T <: Real
     N = length(values)
-    return sum(values, init = zero(T))
+    return sum(values, init = zero(T)) / N
 end
 function average(f::Function, values::Vector{T}) where T 
     N = length(values)
-    return sum((x) -> f(x), values, init = f()) 
+    return sum((x) -> f(x), values, init = f()) /N
 end
 
 end # module SCUtils
