@@ -1,9 +1,6 @@
 module SCUtils
-using Reexport
-@reexport using Test
-@reexport using StaticArrays
-@reexport using SparseArrays
-@reexport using ProgressMeter
+using StaticArrays
+
 #Utilities for finding near neighbours
 struct CellList
     cells::Dict{SVector{2, Int}, Vector{Int}}
@@ -126,22 +123,6 @@ function find_nn_brute_force(particles::Vector{SVector{2, Float64}}, r, L)
     return nn_list
 end
 
-#Tests
-@testset "CellList" begin
-    particles = SVector{2, Float64}[]
-    push!(particles, SVector(0.5,0.5)) # (1,1)
-    push!(particles, SVector(0.75,0.75)) #(1,1)
-    push!(particles, SVector(1.5,0.5)) #(2,1)
-    push!(particles, SVector(1.5,1.5)) #(2,2)
-    push!(particles, SVector(1.5,1.6)) #(2,2)
-    push!(particles, SVector(2.5,2.7)) #(3,3)
-    r = 1.0
-    @test CellList(particles,r).cells == Dict([SVector(1,1) => [1,2], 
-                                                SVector(2,1) => [3],
-                                                SVector(2,2) => [4,5],
-                                                SVector(3,3) => [6]])
-
-end
 
 function average(values::Vector{T}) where T <: Real
     N = length(values)

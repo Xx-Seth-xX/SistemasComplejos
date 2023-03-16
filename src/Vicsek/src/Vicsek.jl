@@ -1,5 +1,9 @@
 module Vicsek
 using SCUtils
+using Parameters
+using StaticArrays
+using ProgressMeter
+
 struct Bird
     position::SVector{2, Float64}
     celerity::Float64
@@ -16,14 +20,14 @@ position() = zero(SVector{2, Float64})
 velocity(bird::Bird) = bird.velocity
 velocity() = zero(SVector{2, Float64})
 
-struct SimulationParameters
-    L::Float64
+@with_kw struct SimulationParameters
     r::Float64
+    L::Float64
     N::Float64
     η::Float64
     celerity::Float64
-    Δt::Int
-    SimulationParameters(L::Real, r::Real, N::Real, η::Real, celerity::Real) = new(float(L), float(r), float(N), float(η), float(celerity), 1)
+    Δt::Int = 1
+    duration::Int
 end
 
 generate_random_flock(sim::SimulationParameters) = generate_random_flock(sim.N, sim.L, sim.celerity)
@@ -62,21 +66,27 @@ function calculate_velocity_parameter(flock::Vector{Bird}, sim::SimulationParame
     return (sum(velocity, flock) |> SCUtils.norm2 |> sqrt) / (sim.N * sim.celerity)
 end
 
-function execute_sim(sim::SimulationParameters, duration::Int)
+function execute_sim(sim::SimulationParameters)
     flock = generate_random_flock(sim.N, sim.L, sim.celerity)
-    last_saved_time = -Inf
-
+    
+    
     #Saving timeseries
     time = Int[]
     va = Float64[]
-    @showprogress 1 for step_number in 1:duration
+    
+    push!(time, 0)
+    push!(va, calculate_velocity_parameter(flock, sim))
+    last_saved_time = 0
+
+    @showprogress 1 for step_number in 1:sim.duration
         step_sim!(flock, sim)
         if(step_number - last_saved_time) > sim.Δt
+            last_saved_time = sim.Δt
             push!(time, step_number)
             push!(va, calculate_velocity_parameter(flock, sim))
         end
     end
-    return (time, va)
+    return time, va
 end
 
 end # module Vicsek
