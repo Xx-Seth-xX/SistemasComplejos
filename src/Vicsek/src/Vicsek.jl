@@ -26,7 +26,7 @@ velocity() = zero(SVector{2, Float64})
     N::Float64
     η::Float64
     celerity::Float64
-    Δt::Int = 1
+    Δt::Int = 0
     duration::Int
 end
 
@@ -40,7 +40,7 @@ function calc_new_angle(near_birds::Vector{Bird}, η::Real)
     return mean_θ + (rand()-0.5)* η
 end
 function calc_new_position(bird::Bird, L::Real)
-    return mod.(bird.position + bird.velocity, L)
+    return mod.((bird.position + bird.velocity), L)
 end
 
 function new_birds(birds::Vector{Bird}, nn_list::Vector{Vector{Int}}, η::Real, L::Real)
@@ -80,8 +80,8 @@ function execute_sim(sim::SimulationParameters)
 
     @showprogress 1 for step_number in 1:sim.duration
         step_sim!(flock, sim)
-        if(step_number - last_saved_time) > sim.Δt
-            last_saved_time = sim.Δt
+        if(step_number - last_saved_time) ≥ sim.Δt
+            last_saved_time = step_number
             push!(time, step_number)
             push!(va, calculate_velocity_parameter(flock, sim))
         end
@@ -89,4 +89,26 @@ function execute_sim(sim::SimulationParameters)
     return time, va
 end
 
+function execute_sim_keep_frames(sim::SimulationParameters)
+    flock = generate_random_flock(sim.N, sim.L, sim.celerity)
+    
+    
+    #Saving timeseries
+    time = Int[]
+    flock_v = Vector{Bird}[]
+    
+    push!(time, 0)
+    push!(flock_v, flock)
+    last_saved_time = 0
+
+    @showprogress 1 for step_number in 1:sim.duration
+        step_sim!(flock, sim)
+        if(step_number - last_saved_time) ≥ sim.Δt
+            last_saved_time = step_number
+            push!(time, step_number)
+            push!(flock_v, copy(flock))
+        end
+    end
+    return time, flock_v
+end
 end # module Vicsek
