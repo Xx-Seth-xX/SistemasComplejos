@@ -142,6 +142,6 @@ function calculate_va_vs_noise(;L, N)
             push!(va_error, std(va)*2) 
         end
         #we save the data to csv
-        safesave(datadir("va_vs_noise", savename(@dict(L, N), "csv")), DataFrame(@strdict(η, va_mean, va_error)))
+        safesave(datadir("va_vs_noise", savename(@dict(L, N), "csv")), DataFrame(@strdict(η, va_mean, va_error, va_var)))
     end
 end
