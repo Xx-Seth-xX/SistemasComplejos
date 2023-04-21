@@ -3,6 +3,7 @@ using SCUtils
 using Parameters
 using StaticArrays
 using ProgressMeter
+using Statistics
 
 struct Bird
     position::SVector{2, Float64}
@@ -21,11 +22,11 @@ velocity(bird::Bird) = bird.velocity
 velocity() = zero(SVector{2, Float64})
 
 @with_kw struct SimulationParameters
-    r::Float64
+    r::Float64 = 1.0
     L::Float64
     N::Float64
     η::Float64
-    celerity::Float64
+    celerity::Float64 = 0.03
     Δt::Int = 0
     duration::Int
 end
@@ -36,7 +37,10 @@ function generate_random_flock(N, L, celerity)
 end
 
 function calc_new_angle(near_birds::Vector{Bird}, η::Real)
-    mean_θ = SCUtils.average(angle, near_birds)
+    mean_x = mean((bird) -> bird.velocity[1] / bird.celerity, near_birds)
+    mean_y = mean((bird) -> bird.velocity[2] / bird.celerity, near_birds)
+    mean_θ = atan(mean_x, mean_y)
+    #mean_θ = SCUtils.average(angle, near_birds)
     return mean_θ + (rand()-0.5)* η
 end
 function calc_new_position(bird::Bird, L::Real)
