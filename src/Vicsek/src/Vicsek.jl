@@ -8,14 +8,10 @@ using Statistics
 struct Bird
     position::SVector{2, Float64}
     celerity::Float64
-    angle::Float64
     velocity::SVector{2, Float64}
-    Bird(pos, celerity, angle, velocity) = new(SVector{2}(pos), celerity, angle, velocity)
-    Bird(pos, celerity, angle) = new(SVector{2}(pos), celerity, angle, SVector{2}(cos(angle), sin(angle)) * celerity)
-    Bird(pos::Vector{Float64}, celerity, angle) = new(SVector{2}(pos), celerity, angle, SVector{2}(cos(angle), sin(angle)) * celerity)
+    Bird(position::SVector{2, Float64}, celerity::Float64, velocity::SVector{2, Float64}) = new(position, celerity, velocity)
+    Bird(pos::Vector{Float64}, celerity::Float64, angle::Float64) = new(SVector{2}(pos), celerity, SVector{2}(cos(angle), sin(angle)) .* celerity)
 end
-angle(bird::Bird) = bird.angle
-angle() = zero(Float64)
 position(bird::Bird) = bird.position
 position() = zero(SVector{2, Float64})
 velocity(bird::Bird) = bird.velocity
@@ -40,7 +36,6 @@ function calc_new_angle(near_birds::Vector{Bird}, η::Real)
     mean_x = mean((bird) -> bird.velocity[1] / bird.celerity, near_birds)
     mean_y = mean((bird) -> bird.velocity[2] / bird.celerity, near_birds)
     mean_θ = atan(mean_x, mean_y)
-    #mean_θ = SCUtils.average(angle, near_birds)
     return mean_θ + (rand()-0.5)* η
 end
 function calc_new_position(bird::Bird, L::Real)
@@ -55,7 +50,7 @@ function new_birds(birds::Vector{Bird}, nn_list::Vector{Vector{Int}}, η::Real, 
         new_position = calc_new_position(birds[i], L) 
         new_celerity = birds[i].celerity
         new_velocity = SVector{2}(cos(new_angle), sin(new_angle)) .* new_celerity
-        new_birds[i] = Bird(new_position, new_celerity, new_angle, new_velocity)
+        new_birds[i] = Bird(new_position, new_celerity, new_velocity)
     end
     return new_birds
 end
