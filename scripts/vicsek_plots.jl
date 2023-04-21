@@ -122,7 +122,7 @@ function calculate_va_vs_noise(;L, N)
     for (L, N) in zip(L, N)
         va_mean = Float64[]
         va_error = Float64[]
-
+        va_var = Float64[]
         folder = datadir("raw_data")
         #Adaptative time step so we always use 2 times the correlation time
         Δt = 2*calculate_correlation_time(;N = N, L = L)
