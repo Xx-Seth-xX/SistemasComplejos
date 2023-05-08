@@ -33,9 +33,9 @@ function generate_random_flock(N, L, celerity)
 end
 
 function calc_new_angle(near_birds::Vector{Bird}, η::Real)
-    mean_x = mean((bird) -> bird.velocity[1] / bird.celerity, near_birds)
-    mean_y = mean((bird) -> bird.velocity[2] / bird.celerity, near_birds)
-    mean_θ = atan(mean_x, mean_y)
+    mean_x = mean((bird) -> bird.velocity[1], near_birds)
+    mean_y = mean((bird) -> bird.velocity[2], near_birds)
+    mean_θ = atan(mean_y, mean_x)
     return mean_θ + (rand()-0.5)* η
 end
 function calc_new_position(bird::Bird, L::Real)
@@ -62,7 +62,7 @@ function step_sim!(flock::Vector{Bird}, sim::SimulationParameters)
 end
 
 function calculate_velocity_parameter(flock::Vector{Bird}, sim::SimulationParameters)
-    return (sum(velocity, flock) |> SCUtils.norm2 |> sqrt) / (sim.N * sim.celerity)
+    return (sum(velocity, flock) |> SCUtils.norm2) / (sim.N * sim.celerity)^2
 end
 
 function execute_sim(sim::SimulationParameters)

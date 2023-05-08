@@ -53,20 +53,22 @@ function find_nn!(nn_list::Vector{Vector{Int}}, foo::Function,positions::Vector{
 
                 ncell = cell + offset
 
-                if ncell[1] == max_cell_index + 1
-                    pos_offset += SVector(L, 0.0)
-                    ncell = SVector(1,ncell[2])
-                elseif ncell[1] == 0
-                    pos_offset += SVector(-L, 0.0)
-                    ncell = SVector(max_cell_index,ncell[2])
-                end
+                if offset != SVector(0,0)
+                  if ncell[1] == max_cell_index + 1
+                      pos_offset += SVector(L, 0.0)
+                      ncell = SVector(1,ncell[2])
+                  elseif ncell[1] == 0
+                      pos_offset += SVector(-L, 0.0)
+                      ncell = SVector(max_cell_index,ncell[2])
+                  end
 
-                if ncell[2] == max_cell_index + 1
-                    pos_offset += SVector(0.0, L)
-                    ncell = SVector(ncell[1], 1)
-                elseif ncell[2] == 0
-                    pos_offset += SVector(0.0, -L)
-                    ncell = SVector(ncell[1], max_cell_index)
+                  if ncell[2] == max_cell_index + 1
+                      pos_offset += SVector(0.0, L)
+                      ncell = SVector(ncell[1], 1)
+                  elseif ncell[2] == 0
+                      pos_offset += SVector(0.0, -L)
+                      ncell = SVector(ncell[1], max_cell_index)
+                  end
                 end
 
                 if haskey(cells, ncell)
@@ -104,7 +106,7 @@ function find_nn_brute_force(particles::Vector{SVector{2, Float64}}, r, L)
     for i in eachindex(particles)
         particles_nn_to_i = Int[]
         for alter_i in eachindex(particles)
-            if alter_i == 
+            if alter_i == i
                 push!(particles_nn_to_i, alter_i)
                 continue
             elseif norm2(particles[i] - particles[alter_i]) < r2              

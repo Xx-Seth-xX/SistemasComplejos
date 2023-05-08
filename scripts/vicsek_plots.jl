@@ -114,22 +114,23 @@ function plot_correlation_time(; N, L, η)
     return fig
 end
 
-function calculate_va_vs_noise(;L, N)
+function calculate_va_vs_noise(;L, N, tT)
     #We parametrise the noise from 0 to 5 at 0.1 intervals
     L = float(L)
     η = 0.1:0.1:5
-    number_of_data_points = 10_000
-    for (L, N) in zip(L, N)
+    number_of_data_points = 500
+    for (L, N, tT) in zip(L, N, tT)
         va_mean = Float64[]
         va_error = Float64[]
         va_var = Float64[]
+        mvar_error = Float64[]
         folder = datadir("raw_data")
         #Adaptative time step so we always use 2 times the correlation time
         Δt = 2*calculate_correlation_time(;N = N, L = L)
         for η in η
 
             #The duration will be the number of data points times the time step plus 100 to eliminate the transient behaviour
-            duration = number_of_data_points * Δt + 1000
+            duration = number_of_data_points * Δt + tT
             config = @dict(L, N, duration, Δt, η)
             data = produce_or_load(execute_sim_dict, SimulationParameters(;config...), folder)[1]
             va = data["va"]
@@ -137,9 +138,11 @@ function calculate_va_vs_noise(;L, N)
             @show std(va[end-number_of_data_points:end])*2
             #We calculate the mean of the va for each noise value
             va = va[end-number_of_data_points:end]
+            @show mean(va)
+            @show std(va)*2 / (sqrt(length(va) - 1))
             push!(va_mean, mean(va))
-            push!(va_var, mean((x) ->x^2, va) - mean(va)^2)
-            push!(va_error, std(va)*2) 
+            push!(va_var, std(va, corrected = false))
+            push!(va_error, std(va)*2 / sqrt(length(va) - 1)) 
         end
         #we save the data to csv
         safesave(datadir("va_vs_noise", savename(@dict(L, N), "csv")), DataFrame(@strdict(η, va_mean, va_error, va_var)))
