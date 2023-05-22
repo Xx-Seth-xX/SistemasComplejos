@@ -54,30 +54,28 @@ function find_nn!(nn_list::Vector{Vector{Int}}, foo::Function,positions::Vector{
                 ncell = cell + offset
 
                 if offset != SVector(0,0)
-                  if ncell[1] == max_cell_index + 1
-                      pos_offset += SVector(L, 0.0)
-                      ncell = SVector(1,ncell[2])
-                  elseif ncell[1] == 0
-                      pos_offset += SVector(-L, 0.0)
-                      ncell = SVector(max_cell_index,ncell[2])
-                  end
-
-                  if ncell[2] == max_cell_index + 1
-                      pos_offset += SVector(0.0, L)
-                      ncell = SVector(ncell[1], 1)
-                  elseif ncell[2] == 0
-                      pos_offset += SVector(0.0, -L)
-                      ncell = SVector(ncell[1], max_cell_index)
-                  end
+                if ncell[1] == max_cell_index + 1
+                    pos_offset += SVector(L, 0.0)
+                    ncell = SVector(1,ncell[2])
+                elseif ncell[1] == 0
+                    pos_offset += SVector(-L, 0.0)
+                    ncell = SVector(max_cell_index,ncell[2])
                 end
 
+                if ncell[2] == max_cell_index + 1
+                    pos_offset += SVector(0.0, L)
+                    ncell = SVector(ncell[1], 1)
+                elseif ncell[2] == 0
+                    pos_offset += SVector(0.0, -L)
+                    ncell = SVector(ncell[1], max_cell_index)
+                end
+                end
                 if haskey(cells, ncell)
                     for alter_p in cells[ncell]
                         if alter_p == p
                             push!(particles_nn_to_p, alter_p)
                             continue
-                        end
-                        if norm2((foo(positions[alter_p]) + pos_offset) - foo(positions[p])) < r2
+                        elseif norm2((foo(positions[alter_p]) + pos_offset) - foo(positions[p])) < r2
                             push!(particles_nn_to_p, alter_p)
                         end
                     end

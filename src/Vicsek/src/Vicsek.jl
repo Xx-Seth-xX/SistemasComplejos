@@ -44,7 +44,7 @@ end
 
 function new_birds(birds::Vector{Bird}, nn_list::Vector{Vector{Int}}, η::Real, L::Real)
     new_birds = Vector{Bird}(undef, length(birds))
-    for i in eachindex(nn_list)
+    Threads.@threads for i in eachindex(nn_list)
         this_p_nn_list = nn_list[i]
         new_angle = calc_new_angle(birds[this_p_nn_list], η)
         new_position = calc_new_position(birds[i], L) 

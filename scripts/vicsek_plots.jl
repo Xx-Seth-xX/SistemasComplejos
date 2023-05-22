@@ -17,10 +17,10 @@ function execute_sim_keep_frames_dict(sim::SimulationParameters)
     return @strdict(time, flock)
 end
 
-function plot_va_vs_time_at_various_η(;N, L, r, celerity, η)
+function plot_va_vs_time_at_various_η(;N, L, η)
     duration = 10_000
     folder = datadir("preliminary_analysis")
-    configs = merge(@dict(L, r,  N, celerity, duration), @dict(η)) |> dict_list
+    configs = merge(@dict(L, N, duration), @dict(η)) |> dict_list
     fig = Figure()
     ax = Axis(fig[1,1])
     ylims!(ax, 0,1)
@@ -29,7 +29,7 @@ function plot_va_vs_time_at_various_η(;N, L, r, celerity, η)
         lines!(ax, data["time"], data["va"], label = "η = $(config[:η])")
     end
     axislegend(ax)
-    safesave(plotsdir("preliminary_analysis", savename(@dict(L, r,  N, celerity), "png")),
+    safesave(plotsdir("preliminary_analysis", savename(@dict(L, N), "png")),
                fig)
     return fig
 end
@@ -61,7 +61,7 @@ function animate_simulation(; N, L, r, celerity, η)
 end
 
 function calculate_correlation_time(; N, L)
-    η = 3
+    η = 2
     duration = 1_000_000
     Δt = 1 #We need to keep every frame so we can calculate correlation time
     folder = datadir("preliminary_analysis", "correlation_time")
@@ -73,13 +73,12 @@ function calculate_correlation_time(; N, L)
     va = data["va"]
 
     #We ignore the first 10_000 va points so we can get rid of the transient behaviour
-    va = va[10_000:end]
+    va = va[300:end]
 
     #We calculate the autocorrelation function
-    acf = autocor(va)
-
+    acf = autocor(va, 0:500)
     #We calculate the correlation time as the first data point that goes below 1/e
-    τ = findfirst(x -> x < 1/exp(1), acf)
+    τ = findfirst(x -> x < exp(-1), acf)
     println("Correlation time for given config is: $(τ)")
     return τ
 end
@@ -87,7 +86,7 @@ end
 function plot_correlation_time(; N, L, η)
     duration = 1_000_000
     Δt = 1 #We need to keep every frame so we can calculate correlation time
-    folder = datadir("preliminary_analysis")
+    folder = datadir("preliminary_analysis", "correlation_time")
     fig = Figure()
     ax = Axis(fig[1,1], xlabel = "Tiempo", ylabel = "Autocorrelación")
     τ = Float64
@@ -99,12 +98,14 @@ function plot_correlation_time(; N, L, η)
         va = data["va"]
 
         #We ignore the first 500 va points so we can get rid of the transient behaviour
-        va = va[100:end]
+        va = va[300:end]
 
         #We calculate the autocorrelation function
         acf = autocor(va, 0:500)
 
-        println("Correlation time for config: $(config) is: $(findfirst(x -> x < 1/exp(1), acf))")
+        corr_time = findfirst(x -> x < exp(-1), acf)
+
+        println("Correlation time for config: $(config) is: $(corr_time)")
         
         #We plot the autocorrelation function
         lines!(ax, 1:length(acf), acf, label = L"η = %$(config[:η]),\; N = %$(config[:N]),\; L = %$(config[:L])")
@@ -114,12 +115,12 @@ function plot_correlation_time(; N, L, η)
     return fig
 end
 
-function calculate_va_vs_noise(;L, N, tT)
+function calculate_va_vs_noise(;L, N)
     #We parametrise the noise from 0 to 5 at 0.1 intervals
     L = float(L)
-    η = 0.1:0.1:5
-    number_of_data_points = 500
-    for (L, N, tT) in zip(L, N, tT)
+    η = 0.2:0.2:5
+    number_of_data_points = 3000
+    for (L, N) in zip(L, N)
         va_mean = Float64[]
         va_error = Float64[]
         va_var = Float64[]
@@ -129,8 +130,8 @@ function calculate_va_vs_noise(;L, N, tT)
         Δt = 2*calculate_correlation_time(;N = N, L = L)
         for η in η
 
-            #The duration will be the number of data points times the time step plus 100 to eliminate the transient behaviour
-            duration = number_of_data_points * Δt + tT
+            #The duration will be the number of data points times the time step plus 300 to eliminate the transient behaviour
+            duration = number_of_data_points * Δt + 300
             config = @dict(L, N, duration, Δt, η)
             data = produce_or_load(execute_sim_dict, SimulationParameters(;config...), folder)[1]
             va = data["va"]
@@ -140,6 +141,7 @@ function calculate_va_vs_noise(;L, N, tT)
             va = va[end-number_of_data_points:end]
             @show mean(va)
             @show std(va)*2 / (sqrt(length(va) - 1))
+            @show std(va)*2 
             push!(va_mean, mean(va))
             push!(va_var, std(va, corrected = false))
             push!(va_error, std(va)*2 / sqrt(length(va) - 1)) 
