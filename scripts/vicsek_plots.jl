@@ -124,7 +124,6 @@ function calculate_va_vs_noise(;L, N)
         va_mean = Float64[]
         va_error = Float64[]
         va_var = Float64[]
-        mvar_error = Float64[]
         folder = datadir("raw_data")
         #Adaptative time step so we always use 2 times the correlation time
         Δt = 2*calculate_correlation_time(;N = N, L = L)
@@ -148,5 +147,38 @@ function calculate_va_vs_noise(;L, N)
         end
         #we save the data to csv
         safesave(datadir("va_vs_noise", savename(@dict(L, N), "csv")), DataFrame(@strdict(η, va_mean, va_error, va_var)))
+    end
+end
+function calculate_va_vs_density_fixed_size(;L, η)
+    L = float(L)
+    η = float(η)
+    number_of_data_points = 3000
+    for (L, η) in zip(L, η)
+        va_mean = Float64[]
+        va_error = Float64[]
+        va_var = Float64[]
+        folder = datadir("raw_data")
+        #Adaptative time step so we always use 2 times the correlation time
+        Δt = 2*calculate_correlation_time(;N = floor(Int, ρ * L^2), L = L)
+        for ρ in [0.2:0.2:4 ; [4.5, 5.0]]
+            #The duration will be the number of data points times the time step plus 300 to eliminate the transient behaviour
+            duration = number_of_data_points * Δt + 300
+            N = floor(Int, ρ * L^2)
+            config = @dict(L, N, duration, Δt, η)
+            data = produce_or_load(execute_sim_dict, SimulationParameters(;config...), folder)[1]
+            va = data["va"]
+            @show mean(va[end-number_of_data_points:end])
+            @show std(va[end-number_of_data_points:end])*2
+            #We calculate the mean of the va for each noise value
+            va = va[end-number_of_data_points:end]
+            @show mean(va)
+            @show std(va)*2 / (sqrt(length(va) - 1))
+            @show std(va)*2 
+            push!(va_mean, mean(va))
+            push!(va_var, std(va, corrected = false))
+            push!(va_error, std(va)*2 / sqrt(length(va) - 1)) 
+        end
+        #we save the data to csv
+        safesave(datadir("va_vs_ρ", savename(@dict(L, η), "csv")), DataFrame(@strdict(η, va_mean, va_error, va_var)))
     end
 end
