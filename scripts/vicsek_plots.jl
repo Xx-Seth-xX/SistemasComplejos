@@ -160,7 +160,8 @@ function calculate_va_vs_density_fixed_size(;L, η)
         folder = datadir("raw_data")
         #Adaptative time step so we always use 2 times the correlation time
         Δt = 2*calculate_correlation_time(;N = floor(Int, ρ * L^2), L = L)
-        for ρ in [0.2:0.2:4 ; [4.5, 5.0]]
+        ρ = [0.2:0.2:4 ; [4.5, 5.0]]
+        for ρ in ρ
             #The duration will be the number of data points times the time step plus 300 to eliminate the transient behaviour
             duration = number_of_data_points * Δt + 300
             N = floor(Int, ρ * L^2)
@@ -179,6 +180,6 @@ function calculate_va_vs_density_fixed_size(;L, η)
             push!(va_error, std(va)*2 / sqrt(length(va) - 1)) 
         end
         #we save the data to csv
-        safesave(datadir("va_vs_ρ", savename(@dict(L, η), "csv")), DataFrame(@strdict(η, va_mean, va_error, va_var)))
+        safesave(datadir("va_vs_ρ", savename(@dict(L, η), "csv")), DataFrame(@strdict(ρ, va_mean, va_error, va_var)))
     end
 end
