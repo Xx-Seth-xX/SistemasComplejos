@@ -1,11 +1,14 @@
 using DrWatson
 @quickactivate
 using Vicsek
-using GLMakie
+using ProgressMeter
+using CairoMakie
 using Statistics
 using StatsBase
 using CSV, CSVFiles
 using DataFrames
+
+update_theme!(fontsize = 30)
 
 import Vicsek.SimulationParameters
 function execute_sim_dict(sim::SimulationParameters) 
@@ -34,12 +37,14 @@ function plot_va_vs_time_at_various_η(;N, L, η)
     return fig
 end
 
-function animate_simulation(; N, L, r, celerity, η)
-    framerate = 60
+function animate_simulation(; N, L, η)
+    framerate = 30
     duration = 5000
-    config = @dict N L r celerity η duration
+    config = @dict N L duration η
     fig = Figure()
     ax = Axis(fig[1,1])
+    xlims!(ax, 0, L)
+    ylims!(ax, 0, L)
     counter = Observable(1)
     folder = datadir("preliminary_analysis", "flock")
 
@@ -53,9 +58,12 @@ function animate_simulation(; N, L, r, celerity, η)
     us = @lift(getindex.($directions,1))
     vs = @lift(getindex.($directions,2))
 
-    arrows!(ax, xs, ys, us, vs, color = :black, size = 1)
+    arrows!(ax, xs, ys, us, vs, color = :black, size = L/2)
+
+    p = Progress(duration + 1, desc = "Rendering simulation...", dt=1.0, showspeed = true)
 
     record(fig, plotsdir("video", savename(SimulationParameters(;config...), "mp4")), 1:(duration + 1), framerate = framerate) do i
+        update!(p, i)
         counter[] = i
     end
 end
@@ -111,7 +119,7 @@ function plot_correlation_time(; N, L, η)
         lines!(ax, 1:length(acf), acf, label = L"η = %$(config[:η]),\; N = %$(config[:N]),\; L = %$(config[:L])")
     end
     axislegend(ax)
-    safesave(plotsdir("preliminary_analysis", "correlation_length.png"), fig)
+    safesave(plotsdir("preliminary_analysis", "correlation_time.png"), fig)
     return fig
 end
 
