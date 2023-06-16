@@ -22,6 +22,7 @@ velocity() = zero(SVector{2, Float64})
     L::Float64
     N::Float64
     η::Float64
+    ϕ::Float64 = π
     celerity::Float64 = 0.03
     Δt::Int = 0
     duration::Int
@@ -32,21 +33,44 @@ function generate_random_flock(N, L, celerity)
     return [Bird(rand(2) .* L, celerity, rand()*2*π) for _ = 1:N]
 end
 
-function calc_new_angle(near_birds::Vector{Bird}, η::Real)
-    mean_x = mean((bird) -> bird.velocity[1], near_birds)
-    mean_y = mean((bird) -> bird.velocity[2], near_birds)
-    mean_θ = atan(mean_y, mean_x)
+function calc_new_angle(near_birds::Vector{Bird},this::Bird, η::Real, ϕ::Float64, r::Float64, L::Float64)
+    birds_in_cone = Iterators.filter((other_bird) -> check_if_bird_in_vision_cone(this, other_bird, ϕ, r, L), Iterators.Stateful(near_birds))
+    mean_v = mean((bird) -> bird.velocity, birds_in_cone)
+    mean_θ = atan(mean_v.y, mean_v.x)
     return mean_θ + (rand()-0.5)* η
 end
 function calc_new_position(bird::Bird, L::Real)
     return mod.((bird.position + bird.velocity), L)
 end
 
-function new_birds(birds::Vector{Bird}, nn_list::Vector{Vector{Int}}, η::Real, L::Real)
+function check_if_bird_in_vision_cone(this::Bird, other::Bird, ϕ::Float64, r::Float64, L::Float64)
+    # Angle between line pointing from this to other and horizontal
+    diff_x = other.position[1] - this.position[1]
+    diff_y = other.position[2] - this.position[2]
+    if diff_y == 0 && diff_x == 0
+        return true
+    end
+    if diff_x < -r 
+        diff_x += L
+    elseif diff_x > r
+        diff_x -= L
+    end
+    if diff_y < -r 
+        diff_y += L
+    elseif diff_y > r
+        diff_y -= L
+    end
+    α = atan(diff_y, diff_x)
+    # Angle between this bird pointing vector and horizontal
+    θ = atan(this.velocity[2], this.velocity[1])
+    return abs(α - θ) ≤ ϕ
+end
+
+function new_birds(birds::Vector{Bird}, nn_list::Vector{Vector{Int}}, η::Real, L::Real, r::Float64, ϕ::Float64)
     new_birds = Vector{Bird}(undef, length(birds))
     Threads.@threads for i in eachindex(nn_list)
         this_p_nn_list = nn_list[i]
-        new_angle = calc_new_angle(birds[this_p_nn_list], η)
+        new_angle = calc_new_angle(birds[this_p_nn_list],birds[i], η, ϕ, r, L)
         new_position = calc_new_position(birds[i], L) 
         new_celerity = birds[i].celerity
         new_velocity = SVector{2}(cos(new_angle), sin(new_angle)) .* new_celerity
@@ -58,7 +82,7 @@ end
 function step_sim!(flock::Vector{Bird}, sim::SimulationParameters)
     #First we generate the nearest neighbours list
     nn_list = SCUtils.find_nn(position, flock, sim.r, sim.L)
-    flock .= new_birds(flock, nn_list, sim.η, sim.L)
+    flock .= new_birds(flock, nn_list, sim.η, sim.L, sim.r, sim.ϕ)
 end
 
 function calculate_velocity_parameter(flock::Vector{Bird}, sim::SimulationParameters)
