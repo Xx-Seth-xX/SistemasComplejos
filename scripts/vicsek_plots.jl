@@ -227,7 +227,7 @@ function calculate_va_vs_angle(;L, N, η)
             push!(va_error, std(va)*2 / sqrt(length(va) - 1)) 
         end
         #we save the data to csv
-        safesave(datadir("va_vs_noise", savename(@dict(L, N, η), "csv")), DataFrame(@strdict(ϕ, va_mean, va_error, va_var)))
+        safesave(datadir("va_vs_angle", savename(@dict(L, N, η), "csv")), DataFrame(@strdict(ϕ, va_mean, va_error, va_var)))
     end
 end
 function calculate_va_vs_density_fixed_size(;L, η)
