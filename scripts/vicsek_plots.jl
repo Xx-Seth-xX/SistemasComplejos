@@ -211,7 +211,7 @@ function calculate_va_vs_angle(;L, N, η)
         for ϕ in ϕ
             #The duration will be the number of data points times the time step plus 300 to eliminate the transient behaviour
             duration = number_of_data_points * Δt + 500
-            config = @dict(L, N, duration, Δt, η)
+            config = @dict(L, N, duration, Δt, η, ϕ)
             data = produce_or_load(execute_sim_dict, SimulationParameters(;config...), folder)[1]
             va = data["va"]
             @show mean(va[end-number_of_data_points:end])
@@ -221,12 +221,13 @@ function calculate_va_vs_angle(;L, N, η)
             @show mean(va)
             @show std(va)*2 / (sqrt(length(va) - 1))
             @show std(va)*2 
+            @show ϕ
             push!(va_mean, mean(va))
             push!(va_var, std(va, corrected = false))
             push!(va_error, std(va)*2 / sqrt(length(va) - 1)) 
         end
         #we save the data to csv
-        safesave(datadir("va_vs_noise", savename(@dict(L, N), "csv")), DataFrame(@strdict(η, va_mean, va_error, va_var)))
+        safesave(datadir("va_vs_noise", savename(@dict(L, N, η), "csv")), DataFrame(@strdict(ϕ, va_mean, va_error, va_var)))
     end
 end
 function calculate_va_vs_density_fixed_size(;L, η)
