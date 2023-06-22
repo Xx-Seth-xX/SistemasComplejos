@@ -36,7 +36,7 @@ end
 function calc_new_angle(near_birds::Vector{Bird},this::Bird, η::Real, ϕ::Float64, r::Float64, L::Float64)
     birds_in_cone = Iterators.filter((other_bird) -> check_if_bird_in_vision_cone(this, other_bird, ϕ, r, L), Iterators.Stateful(near_birds))
     mean_v = mean((bird) -> bird.velocity, birds_in_cone)
-    mean_θ = atan(mean_v.y, mean_v.x)
+    mean_θ = atan(mean_v[2], mean_v[1])
     return mean_θ + (rand()-0.5)* η
 end
 function calc_new_position(bird::Bird, L::Real)
@@ -47,7 +47,7 @@ function check_if_bird_in_vision_cone(this::Bird, other::Bird, ϕ::Float64, r::F
     # Angle between line pointing from this to other and horizontal
     diff_x = other.position[1] - this.position[1]
     diff_y = other.position[2] - this.position[2]
-    if diff_y == 0 && diff_x == 0
+    if diff_y ≈ 0 && diff_x ≈ 0
         return true
     end
     if diff_x < -r 
@@ -60,10 +60,10 @@ function check_if_bird_in_vision_cone(this::Bird, other::Bird, ϕ::Float64, r::F
     elseif diff_y > r
         diff_y -= L
     end
-    α = atan(diff_y, diff_x)
-    # Angle between this bird pointing vector and horizontal
-    θ = atan(this.velocity[2], this.velocity[1])
-    return abs(α - θ) ≤ ϕ
+    norm_other = sqrt(diff_x ^2 + diff_y ^2)
+    norm_this = sqrt(this.position[1] ^2 + this.position[2] ^2)
+    angle = acos(clamp((diff_x * this.position[1] + diff_y * this.position[2]) / (norm_other * norm_this), -1, 1))
+    return abs(angle) ≤ ϕ
 end
 
 function new_birds(birds::Vector{Bird}, nn_list::Vector{Vector{Int}}, η::Real, L::Real, r::Float64, ϕ::Float64)
