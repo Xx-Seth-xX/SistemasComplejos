@@ -60,6 +60,9 @@ function check_if_bird_in_vision_cone(this::Bird, other::Bird, ϕ::Float64, r::F
     elseif diff_y > r
         diff_y -= L
     end
+    if diff_x ^ 2 + diff_y ^2 > r^2
+        return false
+    end
     norm_other = sqrt(diff_x ^2 + diff_y ^2)
     norm_this = sqrt(this.velocity[1] ^2 + this.velocity[2] ^2)
     angle = acos(clamp((diff_x * this.velocity[1] + diff_y * this.velocity[2]) / (norm_other * norm_this), -1, 1))
