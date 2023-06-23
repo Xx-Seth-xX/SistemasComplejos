@@ -23,12 +23,12 @@ velocity() = zero(SVector{2, Float64})
     N::Float64
     η::Float64
     ϕ::Float64 = π
-    celerity::Float64 = 0.03
+    celerity::Float64 = 0.5
     Δt::Int = 0
     duration::Int
 end
 
-generate_random_flock(sim::SimulationParameters) = generate_random_flock(sim.N, sim.L, sim.celerity)
+generate_random_flock(sim::SimulationParameters) = generate_random_flock(sim.N, sim.L, sim.celerity)L
 function generate_random_flock(N, L, celerity)
     return [Bird(rand(2) .* L, celerity, rand()*2*π) for _ = 1:N]
 end

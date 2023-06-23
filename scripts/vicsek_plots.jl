@@ -38,8 +38,8 @@ function plot_va_vs_time(;N, L, η, ϕ)
     return fig
 end
 
-function animate_simulation(; N, L, η, ϕ, duration = 20)
-    framerate = 30
+function animate_simulation(; N, L, η, ϕ, duration = 20, show_tails)
+    framerate = 5
     duration = framerate * duration
     config = @dict N L duration η ϕ
     fig = Figure()
@@ -67,14 +67,17 @@ function animate_simulation(; N, L, η, ϕ, duration = 20)
     end
 
     #rows are the particles and the columns are the times
-    tails = @lift(get_n_before_i(data["flock"], 20, $counter) .|> Vicsek.position)
+    if show_tails
+        tails = @lift(get_n_before_i(data["flock"], 20, $counter) .|> Vicsek.position)
+    end
     
     arrows!(ax, xs, ys, us, vs, color = :black, size = L/2)
 
-    for i in 1:size(tails[])[1]
-        tail = @lift(($tails)[i,:])
-        @show tail
-        scatter!(ax, tail, markersize = 6, markerspace = :pixel, color = RGBA(0,1,0,0.3))
+    if show_tails
+        for i in 1:size(tails[])[1]
+            tail = @lift(($tails)[i,:])
+            scatter!(ax, tail, markersize = 6, markerspace = :pixel, color = RGBA(0,1,0,0.3))
+        end
     end
 
     p = Progress(duration + 1, desc = "Rendering simulation...", dt=1.0, showspeed = true)
@@ -199,8 +202,8 @@ end
 function calculate_va_vs_angle(;L, N, η)
     #We parametrise the noise from 0 to 5 at 0.1 intervals
     L = float(L)
-    ϕ = range(0, π, length = 15)
-    number_of_data_points = 3000
+    ϕ = range(0, π, length = 20)
+    number_of_data_points = 1000
     for (L, N) in zip(L, N)
         va_mean = Float64[]
         va_error = Float64[]
